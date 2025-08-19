@@ -5,48 +5,42 @@ from langchain_ollama import OllamaLLM
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph.message import add_messages
 
+# Initialize Ollama LLM
+llm = OllamaLLM(model="mistral")
 
-llm = OllamaLLM(model = "phi3:latest")
-
+# Define chat state for LangGraph
 class ChatState(TypedDict):
     messages: Annotated[list[BaseMessage], add_messages]
 
 def chat_node(state: ChatState):
-    messages = state['messages']
+    # Non-streaming (used internally if needed)
+    messages = state["messages"]
     response = llm.invoke(messages)
     return {"messages": [response]}
 
-# Checkpointer
+# Setup graph + checkpointer
 checkpointer = InMemorySaver()
-
 graph = StateGraph(ChatState)
 graph.add_node("chat_node", chat_node)
 graph.add_edge(START, "chat_node")
 graph.add_edge("chat_node", END)
 
-
 chatbot = graph.compile(checkpointer=checkpointer)
 
-# Streaming generator for demo/testing: yields response one character at a time
-def stream_response(text, delay=0.05):
-    import time
-    chunk = ""
-    for c in text:
-        chunk += c
-        yield chunk
-        time.sleep(delay)
-
-# Example streaming interface for the chatbot
+# Streaming generator
 def chatbot_stream(input_dict, config=None, stream_mode=None):
-    # Get the response as usual
-    result = chatbot.invoke(input_dict, config=config)
-    # Extract the message content
-    content = result['messages'][-1].content
-    # Yield chunks (simulate streaming)
-    for chunk in stream_response(content):
-        # Yield a dummy message object with .content attribute
-        class DummyMsg:
-            def __init__(self, content):
-                self.content = content
-        yield DummyMsg(chunk), {}
+    """Stream response chunks from Ollama."""
+    for chunk in llm.stream(input_dict["messages"]):
+        # Case 1: AIMessageChunk
+        if hasattr(chunk, "content"):
+            yield chunk.content
+        # Case 2: GenerationChunk
+        elif hasattr(chunk, "text"):
+            yield chunk.text
+        # Case 3: Plain string
+        elif isinstance(chunk, str):
+            yield chunk
+        else:
+            # Fallback: dump whatever it is
+            yield str(chunk)
 
