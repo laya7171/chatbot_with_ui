@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from backend.llm import chatbot
 from langchain_core.messages import HumanMessage, AIMessage
 from langgraph.checkpoint.memory import InMemorySaver
+from backend.llm_database import retrieve_all_threads, get_thread_messages
 
 # Utility functions
 def generate_thread_id():
@@ -84,7 +85,7 @@ if 'thread_id' not in st.session_state:
     st.session_state['thread_id'] = generate_thread_id()
 
 if 'chat_threads' not in st.session_state:
-    st.session_state['chat_threads'] = []
+    st.session_state['chat_threads'] = list(retrieve_all_threads())
 
 # Add a local backup of conversations in session state for debugging
 if 'local_conversations' not in st.session_state:
