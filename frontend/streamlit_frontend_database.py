@@ -12,6 +12,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 from langgraph.checkpoint.memory import InMemorySaver
 from backend.llm_database import retrieve_all_threads, get_thread_messages
 
+
 # Utility functions
 def generate_thread_id():
     thread_id = str(uuid.uuid4())  # Convert to string for consistency

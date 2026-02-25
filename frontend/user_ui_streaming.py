@@ -47,8 +47,5 @@ if user_input:
         full_response = ""
         for chunk in chatbot_stream({"messages": langchain_msgs}, config=CONFIG, stream_mode="messages"):
             # chatbot_stream should yield only the new chunk (string)
-            full_response += str(chunk)
-            placeholder.text(full_response)
 
     # Save assistant response
-    st.session_state['message_history'].append({'role': 'assistant', 'content': full_response})
