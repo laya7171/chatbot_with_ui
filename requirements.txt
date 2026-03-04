@@ -2,3 +2,5 @@ langchain
 langgraph
 langchain_ollama
 streamlit
+reportlab
+PyPDF2
